@@ -13,9 +13,9 @@ class BackupManager()
 
     fun loadAccounts() : ArrayList<Account>
     {
-        var text: String = File(accountsBackupLocation).bufferedReader().readText()
-        var accStrObjects = text.split(";")
-        var accounts = ArrayList<Account>()
+        val text: String = File(accountsBackupLocation).bufferedReader().readText()
+        val accStrObjects = text.split(";")
+        val accounts = ArrayList<Account>()
 
         for ( accStr in accStrObjects)
         {
@@ -31,9 +31,34 @@ class BackupManager()
     private fun toAccount(accJson: String): Account
     {
         val mapper = jacksonObjectMapper()
-        var acc: Account = mapper.readValue(accJson)
+        val acc: Account = mapper.readValue(accJson)
 
         return acc
+    }
+
+    private fun clearBackup()
+    {
+        File(accountsBackupLocation).printWriter().println("")
+    }
+
+    private fun deleteAccount(accNo: String) // this loads all the accounts, and resaves them so could be time sensitive, better to mod from database.
+    {
+        val accounts = loadAccounts()
+        clearBackup()
+
+        for(acc in accounts)
+        {
+            if(acc.accountNumber != accNo)
+            {
+                backupAccount(acc)
+            }
+        }
+    }
+
+    fun modBackUp(accNo: String, acc: Account)
+    {
+        deleteAccount(accNo)
+        backupAccount(acc)
     }
 
     private fun backup(text: String)

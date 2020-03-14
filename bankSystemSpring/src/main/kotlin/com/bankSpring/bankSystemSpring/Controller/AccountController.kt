@@ -22,6 +22,12 @@ class AccountController
     lateinit var bank: Bank
     var backupManager = BackupManager()
 
+    @GetMapping("/api/account/test")
+    fun test(): String
+    {
+        return "connection okay"
+    }
+
     @PostMapping("/api/account/load")
     fun loadAccounts() : String
     {
@@ -37,7 +43,7 @@ class AccountController
     @PostMapping("/api/account/create")
     fun createAccount(@RequestParam(name="beneficiaryName") beneficiaryName: String, @RequestParam(name="pinNumber") pinNumber:String) : String
     {
-        val newAcc = Bank.createAccount(beneficiaryName,pinNumber);
+        val newAcc = Bank.createAccount(beneficiaryName,pinNumber)
         bank.save(newAcc)
         //backupManager.backupAccounts(accountService)
         backupManager.backupAccount(newAcc)
@@ -47,10 +53,10 @@ class AccountController
     @GetMapping("/api/account/getAccountNumber")
     fun getAccountNumber(@RequestParam(name="beneficiaryName") beneficiaryName: String, @RequestParam(name="pinNumber")pinNumber: String) :String
     {
-        var output = "account not found"
+        var output = "account not found or invalid pin"
         for( acc in bank.findAll())
         {
-            if(acc.beneficiaryName == beneficiaryName && acc.pinNumber == pinNumber)
+            if(acc.beneficiaryName == beneficiaryName && acc.testPin(pinNumber))
             {
                 output = acc.accountNumber.toString()
             }
@@ -59,67 +65,61 @@ class AccountController
         return output
     }
 
-    @GetMapping("/api/account/exists")
-    fun accountExists(@RequestParam(name="AccountNumber") accountNumber: String) : Boolean
-    {
-        return bank.existsById(accountNumber)
-    }
-
-    @GetMapping("/api/account/account")
-    fun findAccount(@RequestParam(name="AccountNumber") accountNumber: String): Account
-    {
-        return bank.findByIdOrNull(accountNumber)!!
-    }
-
 
 
     @PostMapping("/api/account/deposit")
-    fun deposit(@RequestParam (name="accountNumber")accountNumber: String, @RequestParam(name="amount") amount: Double) : Boolean
+    fun deposit(@RequestParam (name="accountNumber")accountNumber: String, @RequestParam(name="amount") amount: Double) : String
     {
-        var success = false
+        var success = "deposit unsuccessful"
+
         if(accountExists(accountNumber))
         {
 
-            var depositFloatAccount = Bank.deposit(amount, findAccount(accountNumber))
+            val depositFloatAccount = Bank.deposit(amount, findAccount(accountNumber))
 
-            bank.deleteById(accountNumber)
+
+            //bank.deleteById(accountNumber)
             bank.save(depositFloatAccount)
+            backupManager.modBackUp(accountNumber, depositFloatAccount)
 
-            success = true // no validation on deposits
+            success = "deposit successful" // no validation on deposits
         }
 
         return success
     }
 
     @PostMapping("/api/account/withdraw")
-    fun withdraw(@RequestParam(name = "accountNumber") accountNumber: String, @RequestParam(name="amount") amount: Double, @RequestParam(name= "pinNumber") pinNumber: String) : Boolean
+    fun withdraw(@RequestParam(name = "accountNumber") accountNumber: String, @RequestParam(name="amount") amount: Double, @RequestParam(name= "pinNumber") pinNumber: String) : String
     {
-        var success = false
+        var success = "Withdraw unsuccessful"
+
 
         if(accountExists(accountNumber))
         {
-            if(findAccount(accountNumber).pinNumber == pinNumber)
+            if(findAccount(accountNumber).testPin(pinNumber))
             {
-                var withdrawnFloatAcc = Bank.withdraw(amount, findAccount(accountNumber), pinNumber)
+                val withdrawFloatAcc = Bank.withdraw(amount, findAccount(accountNumber), pinNumber)
 
-                bank.deleteById(accountNumber)
-                bank.save(withdrawnFloatAcc)
-                success = true
+                bank.save(withdrawFloatAcc)
+                backupManager.modBackUp(accountNumber, withdrawFloatAcc)
+                success = "withdraw successful"
             }
         }
+
+
         return success
     }
 
     @PostMapping("api/account/transfer")
-    fun transfer(@RequestParam(name = "fromAccountNo") fromAccountNumber: String, @RequestParam(name="toAccountNumber") toAccountNumber: String,@RequestParam(name="amount") amount: Double, @RequestParam(name= "pinNumber") pinNumber: String) : Boolean
+    fun transfer(@RequestParam(name = "fromAccount") fromAccountNumber: String, @RequestParam(name="toAccount") toAccountNumber: String,@RequestParam(name="amount") amount: Double, @RequestParam(name= "pinNumber") pinNumber: String) : String
     {
-        var success = false
+        var success = "transfer unsuccessful"
 
         if(accountExists(fromAccountNumber) && accountExists(toAccountNumber))
         {
             withdraw(fromAccountNumber, amount, pinNumber)
             deposit(toAccountNumber, amount)
-            success = true
+            success = "transfer of amount: " + amount + "  successful"
         }
 
         return success
@@ -136,10 +136,16 @@ class AccountController
         return output
     }
 
-    @GetMapping("/api/account/test")
-    fun test(): String
+    @GetMapping("/api/account/exists")
+    fun accountExists(@RequestParam(name="AccountNumber") accountNumber: String) : Boolean
     {
-        return "connection okay"
+        return bank.existsById(accountNumber)
+    }
+
+    @GetMapping("/api/account/account")
+    fun findAccount(@RequestParam(name="AccountNumber") accountNumber: String): Account
+    {
+        return bank.findByIdOrNull(accountNumber)!!
     }
 
 }

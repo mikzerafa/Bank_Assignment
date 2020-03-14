@@ -18,16 +18,13 @@ interface Bank  : CrudRepository<Account, String>{
 
         fun deposit(amount: Double, account: Account) : Account
         {
-            account.funds+= amount
+            account.deposit(amount)
             return account
         }
 
         fun withdraw(amount: Double,  account: Account, pin: String) : Account
         {
-            if(pin == account.pinNumber) {
-                account.funds -= amount
-            }
-
+            account.withdraw(amount, pin)
             return account
         }
 

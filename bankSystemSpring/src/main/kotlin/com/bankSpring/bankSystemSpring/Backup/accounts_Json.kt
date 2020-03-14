@@ -8,9 +8,11 @@ class accounts_Json()
 
     fun toJson(acc: Account) : String
     {
-        var mapper = jacksonObjectMapper()
+        val mapper = jacksonObjectMapper()
         return mapper.writeValueAsString(acc)
     }
+
+    /*
     fun convert(acc: Account) :String
     {
         var output = ""
@@ -22,7 +24,7 @@ class accounts_Json()
 
         return betweenCurly(output)
     }
-
+    */
 
     private fun numberEntry(header: String, value: String, withComma: Boolean) : String
     {
