@@ -6,6 +6,7 @@ host: localhost:8080
 basePath: /api/account
 schemes:
   - http
+
 paths:
   /test:
     get:
