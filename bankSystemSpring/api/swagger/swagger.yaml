@@ -1,0 +1,155 @@
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: Bank System API
+host: localhost:8080
+basePath: /api/account
+schemes:
+  - http
+paths:
+  /test:
+    get:
+      summary: Tests connection to server
+      responses:
+        '200':
+          description: a string stating connection okay is returned
+  /create/{beneficiaryName}&{pinNumber}:
+    post:
+      summary: creates a new account
+      parameters:
+        - in: path
+          name: beneficiaryName
+          required: true
+          type: string
+          description: name of account holder
+        - in: path
+          name: pinNumber
+          required: true
+          type: string
+          description: a pin number of length 4
+      responses:
+        '200':
+          description: account has been created and backedup
+  /load:
+    post:
+      summary: loads database with latest accounts
+      responses:
+        '200':
+          description: Accounts are loaded into Database from backup.
+  /data:
+    get:
+      summary: loads a list of account details
+      responses:
+        '200':
+          description: loads account number, beneficiary Name & funds for each account
+  /getAccountNumber/{beneficiaryName}&{pinNumber}:
+    get:
+      summary: returns account number
+      parameters:
+        - in: path
+          name: beneficiaryName
+          required: true
+          type: string
+          description: name of account holder
+        - in: path
+          name: pinNumber
+          required: true
+          type: string
+          description: a pin number of length 4
+      responses:
+        '200':
+          description: returns account number of user provided correct pin
+  /withdraw/{accountNumber}&{amount}*{pinNumber}:
+    post:
+      summary: withdraws amount from account
+      parameters:
+        - in: path
+          name: accountNumber
+          required: true
+          type: string
+          description: account Number of account to withdraw from
+        - in: path
+          name: amount
+          required: true
+          minimum: 0
+          type: number
+          description: amount to withdraw
+        - in: path
+          name: pinNumber
+          required: true
+          type: string
+          description: pin number of account
+      responses:
+        '200':
+          description: amount is withdrawn from the account given the correct pin
+  /deposit/{accountNumber}&{amount}:
+    post:
+      summary: deposits amount into account
+      parameters:
+        - in: path
+          name: accountNumber
+          required: true
+          type: string
+          description: account Number of account to deposit into
+        - in: path
+          name: amount
+          required: true
+          minimum: 0
+          type: number
+          description: amount to deposit
+      responses:
+        '200':
+          description: amount is withdrawn from user's account
+  /transfer/{fromAccount}&{toAccount}&{amount}&{pinNumber}:
+    post:
+      summary: transfers amount from one account to another
+      parameters:
+        - in: path
+          name: fromAccount
+          required: true
+          type: string
+          description: account Number of account to withdraw from
+        - in: path
+          name: toAccount
+          required: true
+          type: string
+          description: account Number of account to deposit into
+        - in: path
+          name: amount
+          required: true
+          minimum: 0
+          type: number
+          description: amount to deposit
+        - in: path
+          name: pinNumber
+          required: true
+          type: string
+          description: pinNumber of account to be withdrawn from
+
+      responses:
+        '200':
+          description: amount is withdrawn from sender's account with pin then deposited into receivers account
+  /exists/{AccountNumber}:
+    get:
+      summary: returns whether an accountNumber exists or not
+      parameters:
+        - in: path
+          name: AccountNumber
+          required: true
+          type: string
+          description: account number to be referenced
+      responses:
+        '200':
+          description: takes account number and returns if account is found in database
+  /account/{AccountNumber}:
+    get:
+      summary: returns the account of the given account number
+      parameters:
+        - in: path
+          name: AccountNumber
+          required: true
+          type: string
+          description: account number to be referenced
+      responses:
+        '200':
+          description: return account of given account number including pin
