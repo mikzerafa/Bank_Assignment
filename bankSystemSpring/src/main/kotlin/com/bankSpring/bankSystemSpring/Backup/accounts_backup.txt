@@ -1,1 +1,1 @@
-{"name":"\"mikhl\"","pin":"\"0111\"","accountNumber":"1","beneficiaryName":"\"mikhl\"","funds":8.2};
+{"beneficiaryName":"\"pingu\"","pinNumber":"3442","accountNumber":"1","funds":0.0};

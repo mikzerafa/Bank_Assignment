@@ -2,6 +2,7 @@ package com.bankSpring.bankSystemSpring.Controller
 
 import com.bankSpring.bankSystemSpring.Backup.BackupManager
 import com.bankSpring.bankSystemSpring.Service.BankService
+import com.bankSpring.bankSystemSpring.Response.Response
 
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,6 +25,7 @@ class AccountController
     lateinit var bankRepository: BankRepository
     var backupManager = BackupManager()
     val bankService = BankService()
+    var response = Response().newResponse()
 
     @GetMapping("/api/account/test")
     fun test(): String
@@ -31,16 +33,39 @@ class AccountController
         return "connection okay"
     }
 
-    @PostMapping("/api/account/load")
-    fun loadAccounts() : String
+    @GetMapping("/api/account/test2")
+    fun test2():Response
     {
+        response = Response().addAction(response,"testing connection")
+        response = Response().addProcess(response,"n/a")
+        response = Response().addResult(response, "okay")
 
-        for(acc in backupManager.loadAccounts())
+        return response
+    }
+
+    @PostMapping("/api/account/load")
+    fun loadAccounts() : Response
+    {
+        response = Response().addAction(response, "Loading")
+        response = Response().addProcess(response, "loading accounts into database")
+
+        try {
+            for(acc in backupManager.loadAccounts())
+            {
+                response = Response().addProcess(response, "saving account")
+                bankRepository.save(acc)
+
+            }
+        } catch(ex: Exception)
         {
-            bankRepository.save(acc)
+            response = Response().addProcess(response, "caught exception")
+            response = Response().addResult(response, ex.message!!)
         }
 
-        return "accounts have been loaded!"
+
+        response = Response().addResult(response,"accounts have been loaded!")
+
+        return response
     }
 
     @PostMapping("/api/account/create")
@@ -51,7 +76,6 @@ class AccountController
         {
             val newAcc = bankService.createAccount(beneficiaryName,pinNumber)
             bankRepository.save(newAcc)
-            //backupManager.backupAccounts(accountService)
             backupManager.backupAccount(newAcc)
 
             output = "account added"

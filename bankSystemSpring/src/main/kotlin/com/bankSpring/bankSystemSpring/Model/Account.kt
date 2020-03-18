@@ -4,12 +4,10 @@ import javax.persistence.*
 
 @Entity
 @Table(name= "Account")
-data class Account( val name: String, val pin: String)
+data class Account( val beneficiaryName: String, val pinNumber: String)
 {
         @Id @GeneratedValue(strategy = GenerationType.IDENTITY) @Column(columnDefinition = "serial")
         val accountNumber: String? = null
-        val beneficiaryName: String = name
-        private val pinNumber: String = pin
         var funds :Double = 0.0
 
         fun deposit(amount: Double)

@@ -7,8 +7,9 @@ import org.junit.Test
 
 class BankRepositoryTests
 {
-    var beneficiaryName = "mikhail"
-    var pinNumber = "1234"
+    val beneficiaryName = "mikhail"
+    val pinNumber = "1234"
+    val badPinNumber = "2333"
     val bankService =  BankService()
 
     @Test
@@ -17,7 +18,7 @@ class BankRepositoryTests
         val newAccount = bankService.createAccount(beneficiaryName, pinNumber)
 
         return  Assert.assertEquals(newAccount.beneficiaryName, beneficiaryName).toString() != "" &&
-                Assert.assertEquals(newAccount.pin, pinNumber).toString() != ""
+                Assert.assertEquals(newAccount.pinNumber, pinNumber).toString() != ""
     }
 
     @Test

@@ -9,7 +9,7 @@ class BackupManager()
 {
     //Pass an object into backup manager with the desired json file location
     var accountsBackupLocation: String = "src/main/kotlin/com/bankSpring/bankSystemSpring/Backup/accounts_backup.txt"
-    var acc_json = accounts_Json()
+    val mapper = jacksonObjectMapper()
 
     fun loadAccounts() : ArrayList<Account>
     {
@@ -28,9 +28,13 @@ class BackupManager()
         return accounts
     }
 
+    private fun toJson(acc:Account) : String
+    {
+        return mapper.writeValueAsString(acc)
+    }
+
     private fun toAccount(accJson: String): Account
     {
-        val mapper = jacksonObjectMapper()
         val acc: Account = mapper.readValue(accJson)
 
         return acc
@@ -68,6 +72,6 @@ class BackupManager()
 
     fun backupAccount(acc: Account)
     {
-        backup(acc_json.toJson(acc) + ";")
+        backup(toJson(acc) + ";")
     }
 }
