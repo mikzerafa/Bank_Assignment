@@ -46,11 +46,18 @@ class AccountController
     @PostMapping("/api/account/create")
     fun createAccount(@RequestParam(name="beneficiaryName") beneficiaryName: String, @RequestParam(name="pinNumber") pinNumber:String) : String
     {
-        val newAcc = bankService.createAccount(beneficiaryName,pinNumber)
-        bankRepository.save(newAcc)
-        //backupManager.backupAccounts(accountService)
-        backupManager.backupAccount(newAcc)
-        return "account Added"
+        var output = "pin must only contain digits 0-9 and be 4 digits long"
+        if(bankService.validNewPin(pinNumber))
+        {
+            val newAcc = bankService.createAccount(beneficiaryName,pinNumber)
+            bankRepository.save(newAcc)
+            //backupManager.backupAccounts(accountService)
+            backupManager.backupAccount(newAcc)
+
+            output = "account added"
+        }
+
+        return output
     }
 
     @GetMapping("/api/account/getAccountNumber")

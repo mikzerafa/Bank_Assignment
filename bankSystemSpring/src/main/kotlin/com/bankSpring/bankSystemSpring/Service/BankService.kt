@@ -4,6 +4,19 @@ import com.bankSpring.bankSystemSpring.Model.Account
 
 class BankService {
 
+    fun validNewPin(enteredPinNumber: String) : Boolean {
+        var isValidPin = false
+
+        if (enteredPinNumber.length == 4)
+        {
+            if(enteredPinNumber.toIntOrNull() != null)
+            {
+                isValidPin = true
+            }
+        }
+
+        return isValidPin
+    }
     fun createAccount(beneficiaryName: String, pinNumber: String) : Account
     {
         return Account(beneficiaryName, pinNumber)
