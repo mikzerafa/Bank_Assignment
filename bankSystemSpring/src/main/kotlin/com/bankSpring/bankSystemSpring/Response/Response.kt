@@ -78,4 +78,18 @@ class Response
     {
         return ln(actionPrint(model)) + tab(currentProcessPrint(model)) +  ln(processPrint(model)) + ln(resultPrint(model))
     }
+
+    fun merge(mainAction: Response, withAction: Response): Response
+    {
+        //with action results append main action and results are taken as a process
+
+        for(p in withAction.process)
+        {
+            mainAction.process.add(p)
+        }
+
+        mainAction.process.add(withAction.result)
+
+        return mainAction
+    }
 }

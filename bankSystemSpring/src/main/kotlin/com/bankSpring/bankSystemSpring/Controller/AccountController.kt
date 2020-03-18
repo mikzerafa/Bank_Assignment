@@ -69,115 +69,150 @@ class AccountController
     }
 
     @PostMapping("/api/account/create")
-    fun createAccount(@RequestParam(name="beneficiaryName") beneficiaryName: String, @RequestParam(name="pinNumber") pinNumber:String) : String
+    fun createAccount(@RequestParam(name="beneficiaryName") beneficiaryName: String,
+                      @RequestParam(name="pinNumber") pinNumber:String) : Response
     {
-        var output = "pin must only contain digits 0-9 and be 4 digits long"
+        response = Response().addAction(response, "Creating Account")
+        response = Response().addProcess(response, "validating Pin")
+
         if(bankService.validNewPin(pinNumber))
         {
+            response = Response().addProcess(response, "creating account")
             val newAcc = bankService.createAccount(beneficiaryName,pinNumber)
+
+            response = Response().addProcess(response, "saving account")
             bankRepository.save(newAcc)
+
+            response = Response().addProcess(response, "backing up Account")
             backupManager.backupAccount(newAcc)
 
-            output = "account added"
+            response = Response().addResult(response, "account added successfully")
+        }
+        else
+        {
+            response = Response().addResult(response,"pin must only contain digits 0-9 and be 4 digits long")
         }
 
-        return output
+
+        return response
     }
 
     @GetMapping("/api/account/getAccountNumber")
-    fun getAccountNumber(@RequestParam(name="beneficiaryName") beneficiaryName: String, @RequestParam(name="pinNumber")pinNumber: String) :String
+    fun getAccountNumber(@RequestParam(name="beneficiaryName") beneficiaryName: String,
+                         @RequestParam(name="pinNumber")pinNumber: String) :Response
     {
-        var output = "account not found or invalid pin"
+        response = Response().addAction(response, "getting Account number")
+        response = Response().addProcess(response, "searching for account")
+        response = Response().addResult(response,  "account not found or invalid pin")
         for( acc in bankRepository.findAll())
         {
             if(acc.beneficiaryName == beneficiaryName && acc.testPin(pinNumber))
             {
-                output = acc.accountNumber.toString()
+                response = Response().addResult(response,  acc.accountNumber.toString())
             }
         }
 
-        return output
+        return response
     }
 
 
 
     @PostMapping("/api/account/deposit")
-    fun deposit(@RequestParam (name="accountNumber")accountNumber: String, @RequestParam(name="amount") amount: Double) : String
+    fun deposit(@RequestParam (name="accountNumber")accountNumber: String,
+                @RequestParam(name="amount") amount: Double) : Response
     {
-        var success = "deposit unsuccessful"
+        response = Response().addAction(response, "depositing into account")
+        response = Response().addResult(response, "deposit unsuccessful")
+        response = Response().addProcess(response, "checking if account exists")
 
-        if(accountExists(accountNumber))
+        if(bankRepository.existsById(accountNumber))
         {
-
+            response = Response().addProcess(response, "depositing amoount: " + amount)
             val depositFloatAccount = bankService.deposit(amount, findAccount(accountNumber))
 
 
-            //bank.deleteById(accountNumber)
+            response = Response().addProcess(response, "updating databases")
             bankRepository.save(depositFloatAccount)
             backupManager.modBackUp(accountNumber, depositFloatAccount)
 
-            success = "deposit successful" // no validation on deposits
+            response = Response().addResult(response, "deposit successful")// no validation on deposits
         }
 
-        return success
+        return response
     }
 
     @PostMapping("/api/account/withdraw")
-    fun withdraw(@RequestParam(name = "accountNumber") accountNumber: String, @RequestParam(name="amount") amount: Double, @RequestParam(name= "pinNumber") pinNumber: String) : String
+    fun withdraw(@RequestParam(name = "accountNumber") accountNumber: String,
+                 @RequestParam(name="amount") amount: Double,
+                 @RequestParam(name= "pinNumber") pinNumber: String) : Response
     {
-        var success = "Withdraw unsuccessful"
+        response = Response().addAction(response,"Withdrawing from account")
+        response = Response().addResult(response, "Withdraw unsuccessful")
 
-
-        if(accountExists(accountNumber))
+        response = Response().addProcess(response, "checking if account exists")
+        if(bankRepository.existsById(accountNumber))
         {
+            response = Response().addProcess(response, "testing pin number")
             if(findAccount(accountNumber).testPin(pinNumber))
             {
+                response = Response().addProcess(response, "withdrawing from account amount: "+ amount)
                 val withdrawFloatAcc = bankService.withdraw(amount, findAccount(accountNumber), pinNumber)
 
+                response = Response().addProcess(response, "updating databases")
                 bankRepository.save(withdrawFloatAcc)
                 backupManager.modBackUp(accountNumber, withdrawFloatAcc)
-                success = "withdraw successful"
+
+               response = Response().addResult(response, "withdraw successful")
             }
         }
 
 
-        return success
+        return response
     }
 
     @PostMapping("api/account/transfer")
-    fun transfer(@RequestParam(name = "fromAccount") fromAccountNumber: String, @RequestParam(name="toAccount") toAccountNumber: String,@RequestParam(name="amount") amount: Double, @RequestParam(name= "pinNumber") pinNumber: String) : String
+    fun transfer(@RequestParam(name = "fromAccount") fromAccountNumber: String,
+                 @RequestParam(name="toAccount") toAccountNumber: String,
+                 @RequestParam(name="amount") amount: Double,
+                 @RequestParam(name= "pinNumber") pinNumber: String) : Response
     {
-        var success = "transfer unsuccessful"
+        response = Response().addAction(response, "Transfer")
+        response = Response().addResult(response, "transfer unsuccessful")
 
-        if(accountExists(fromAccountNumber) && accountExists(toAccountNumber))
+        if(bankRepository.existsById(fromAccountNumber) && bankRepository.existsById(toAccountNumber))
         {
             if(findAccount(fromAccountNumber).testPin((pinNumber)))
             {
-                withdraw(fromAccountNumber, amount, pinNumber)
-                deposit(toAccountNumber, amount)
-                success = "transfer of amount: " + amount + "  successful"
-
+                val withdrawResponse = withdraw(fromAccountNumber, amount, pinNumber)
+                response = Response().merge(response, withdrawResponse)
+                val depositResponse = deposit(toAccountNumber, amount)
+                response = Response().merge(response, depositResponse)
+                response = Response().addResult(response, "transfer of amount: " + amount + "  successful")
             }
         }
 
-        return success
+        return response
     }
 
     @GetMapping("/api/account/data")
-    fun data(): String
+    fun data(): Response
     {
-        var output = ""
+        response = Response().addAction(response, "getting account Data")
+
         for( acc in bankRepository.findAll())
         {
-            output += bankService.data(acc) + "\n"
+            response = Response().addProcess(response, bankService.data(acc))
         }
-        return output
+        return response
     }
 
     @GetMapping("/api/account/exists")
-    fun accountExists(@RequestParam(name="AccountNumber") accountNumber: String) : Boolean
+    fun accountExists(@RequestParam(name="AccountNumber") accountNumber: String) : Response
     {
-        return bankRepository.existsById(accountNumber)
+        response = Response().addAction(response, "checking if account exists")
+
+        response = Response().addResult(response, bankRepository.existsById(accountNumber).toString())
+        return response
     }
 
     @GetMapping("/api/account/account")
