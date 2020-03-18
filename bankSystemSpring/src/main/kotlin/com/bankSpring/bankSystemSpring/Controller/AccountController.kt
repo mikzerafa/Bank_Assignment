@@ -117,9 +117,10 @@ class AccountController
 
         if(accountExists(fromAccountNumber) && accountExists(toAccountNumber))
         {
-            withdraw(fromAccountNumber, amount, pinNumber)
-            deposit(toAccountNumber, amount)
-            success = "transfer of amount: " + amount + "  successful"
+            if(withdraw(fromAccountNumber, amount, pinNumber).contains(" successful")) {
+                deposit(toAccountNumber, amount)
+                success = "transfer of amount: " + amount + "  successful"
+            }
         }
 
         return success
