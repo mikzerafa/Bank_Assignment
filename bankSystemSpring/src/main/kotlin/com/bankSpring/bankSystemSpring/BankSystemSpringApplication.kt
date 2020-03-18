@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
 	runApplication<BankSystemSpringApplication>(*args)
 
 	val testRun = true
-	val bankTests = BankTests()
+	val bankTests = BankRepositoryTests()
 
 	if(testRun)
 	{

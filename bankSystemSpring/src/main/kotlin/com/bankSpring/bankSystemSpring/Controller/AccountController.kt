@@ -1,6 +1,8 @@
 package com.bankSpring.bankSystemSpring.Controller
 
 import com.bankSpring.bankSystemSpring.Backup.BackupManager
+import com.bankSpring.bankSystemSpring.Service.BankService
+
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -10,7 +12,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.web.bind.annotation.RequestParam
 
 
-import com.bankSpring.bankSystemSpring.Service.Bank
+import com.bankSpring.bankSystemSpring.Model.BankRepository
 import com.bankSpring.bankSystemSpring.Model.Account
 
 
@@ -19,8 +21,9 @@ import com.bankSpring.bankSystemSpring.Model.Account
 class AccountController
 {
     @Autowired
-    lateinit var bank: Bank
+    lateinit var bankRepository: BankRepository
     var backupManager = BackupManager()
+    val bankService = BankService()
 
     @GetMapping("/api/account/test")
     fun test(): String
@@ -34,7 +37,7 @@ class AccountController
 
         for(acc in backupManager.loadAccounts())
         {
-            bank.save(acc)
+            bankRepository.save(acc)
         }
 
         return "accounts have been loaded!"
@@ -43,8 +46,8 @@ class AccountController
     @PostMapping("/api/account/create")
     fun createAccount(@RequestParam(name="beneficiaryName") beneficiaryName: String, @RequestParam(name="pinNumber") pinNumber:String) : String
     {
-        val newAcc = Bank.createAccount(beneficiaryName,pinNumber)
-        bank.save(newAcc)
+        val newAcc = bankService.createAccount(beneficiaryName,pinNumber)
+        bankRepository.save(newAcc)
         //backupManager.backupAccounts(accountService)
         backupManager.backupAccount(newAcc)
         return "account Added"
@@ -54,7 +57,7 @@ class AccountController
     fun getAccountNumber(@RequestParam(name="beneficiaryName") beneficiaryName: String, @RequestParam(name="pinNumber")pinNumber: String) :String
     {
         var output = "account not found or invalid pin"
-        for( acc in bank.findAll())
+        for( acc in bankRepository.findAll())
         {
             if(acc.beneficiaryName == beneficiaryName && acc.testPin(pinNumber))
             {
@@ -75,11 +78,11 @@ class AccountController
         if(accountExists(accountNumber))
         {
 
-            val depositFloatAccount = Bank.deposit(amount, findAccount(accountNumber))
+            val depositFloatAccount = bankService.deposit(amount, findAccount(accountNumber))
 
 
             //bank.deleteById(accountNumber)
-            bank.save(depositFloatAccount)
+            bankRepository.save(depositFloatAccount)
             backupManager.modBackUp(accountNumber, depositFloatAccount)
 
             success = "deposit successful" // no validation on deposits
@@ -98,9 +101,9 @@ class AccountController
         {
             if(findAccount(accountNumber).testPin(pinNumber))
             {
-                val withdrawFloatAcc = Bank.withdraw(amount, findAccount(accountNumber), pinNumber)
+                val withdrawFloatAcc = bankService.withdraw(amount, findAccount(accountNumber), pinNumber)
 
-                bank.save(withdrawFloatAcc)
+                bankRepository.save(withdrawFloatAcc)
                 backupManager.modBackUp(accountNumber, withdrawFloatAcc)
                 success = "withdraw successful"
             }
@@ -130,9 +133,9 @@ class AccountController
     fun data(): String
     {
         var output = ""
-        for( acc in bank.findAll())
+        for( acc in bankRepository.findAll())
         {
-            output += Bank.data(acc) + "\n"
+            output += bankService.data(acc) + "\n"
         }
         return output
     }
@@ -140,13 +143,13 @@ class AccountController
     @GetMapping("/api/account/exists")
     fun accountExists(@RequestParam(name="AccountNumber") accountNumber: String) : Boolean
     {
-        return bank.existsById(accountNumber)
+        return bankRepository.existsById(accountNumber)
     }
 
     @GetMapping("/api/account/account")
     fun findAccount(@RequestParam(name="AccountNumber") accountNumber: String): Account
     {
-        return bank.findByIdOrNull(accountNumber)!!
+        return bankRepository.findByIdOrNull(accountNumber)!!
     }
 
 }

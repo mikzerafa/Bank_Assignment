@@ -1,19 +1,20 @@
 package com.bankSpring.bankSystemSpring.Tests
 
-import com.bankSpring.bankSystemSpring.Service.Bank
-import com.bankSpring.bankSystemSpring.Model.Account
+import com.bankSpring.bankSystemSpring.Model.BankRepository
+import com.bankSpring.bankSystemSpring.Service.BankService
 import org.junit.Assert
 import org.junit.Test
 
-class BankTests
+class BankRepositoryTests
 {
     var beneficiaryName = "mikhail"
     var pinNumber = "1234"
+    val bankService =  BankService()
 
     @Test
     fun createAccountTest() : Boolean
     {
-        val newAccount = Bank.createAccount(beneficiaryName, pinNumber)
+        val newAccount = bankService.createAccount(beneficiaryName, pinNumber)
 
         return  Assert.assertEquals(newAccount.beneficiaryName, beneficiaryName).toString() != "" &&
                 Assert.assertEquals(newAccount.pin, pinNumber).toString() != ""
@@ -23,9 +24,9 @@ class BankTests
     fun depositTest() : Boolean
     {
         val amount = 1.3
-        val account = Bank.createAccount(beneficiaryName, pinNumber)
+        val account = bankService.createAccount(beneficiaryName, pinNumber)
         val originalFunds = account.funds
-        val depositedAccount = Bank.deposit(amount, account)
+        val depositedAccount = bankService.deposit(amount, account)
 
         println("account funds: " + account.funds)
         println("depositied Account funds: " + depositedAccount.funds)
@@ -37,11 +38,11 @@ class BankTests
     {
         val originalAmount = 5.4
         val amount = 1.3
-        var account = Bank.createAccount(beneficiaryName, pinNumber)
-        account = Bank.deposit(originalAmount, account)
+        var account = bankService.createAccount(beneficiaryName, pinNumber)
+        account = bankService.deposit(originalAmount, account)
         val originalFunds = account.funds
 
-        val withdrawAccount = Bank.withdraw(amount, account, pinNumber)
+        val withdrawAccount = bankService.withdraw(amount, account, pinNumber)
 
         return Assert.assertEquals(withdrawAccount.funds, originalFunds-amount, 0.0).toString() != ""
     }
@@ -49,8 +50,8 @@ class BankTests
     @Test
     fun dataTest() : Boolean
     {
-        val acc = Bank.createAccount(beneficiaryName, pinNumber)
-        val data = Bank.data(acc)
+        val acc = bankService.createAccount(beneficiaryName, pinNumber)
+        val data = bankService.data(acc)
 
         return Assert.assertEquals(acc.accountNumber +", " + acc.beneficiaryName +", " + acc.funds, data).toString() != ""
     }
