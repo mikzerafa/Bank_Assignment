@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 import com.bankSpring.bankSystemSpring.Model.BankRepository
 import com.bankSpring.bankSystemSpring.Model.Account
-
+import com.bankSpring.bankSystemSpring.Response.ResponseService
 
 
 @RestController
@@ -25,7 +25,8 @@ class AccountController
     lateinit var bankRepository: BankRepository
     var backupManager = BackupManager()
     val bankService = BankService()
-    var response = Response().newResponse()
+    val responseService = ResponseService()
+    var response = Response()
 
     @GetMapping("/api/account/test")
     fun test(): String
@@ -34,11 +35,11 @@ class AccountController
     }
 
     @GetMapping("/api/account/test2")
-    fun test2():Response
+    fun test2(): Response
     {
-        response = Response().addAction(response,"testing connection")
-        response = Response().addProcess(response,"n/a")
-        response = Response().addResult(response, "okay")
+        response = responseService.addAction(response,"testing connection")
+        response = responseService.addProcess(response,"n/a")
+        response = responseService.addResult(response, "okay")
 
         return response
     }
@@ -46,24 +47,24 @@ class AccountController
     @PostMapping("/api/account/load")
     fun loadAccounts() : Response
     {
-        response = Response().addAction(response, "Loading")
-        response = Response().addProcess(response, "loading accounts into database")
+        response = responseService.addAction(response, "Loading")
+        response = responseService.addProcess(response, "loading accounts into database")
 
         try {
             for(acc in backupManager.loadAccounts())
             {
-                response = Response().addProcess(response, "saving account")
+                response = responseService.addProcess(response, "saving account")
                 bankRepository.save(acc)
 
             }
         } catch(ex: Exception)
         {
-            response = Response().addProcess(response, "caught exception")
-            response = Response().addResult(response, ex.message!!)
+            response = responseService.addProcess(response, "caught exception")
+            response = responseService.addResult(response, ex.message!!)
         }
 
 
-        response = Response().addResult(response,"accounts have been loaded!")
+        response = responseService.addResult(response,"accounts have been loaded!")
 
         return response
     }
@@ -72,25 +73,25 @@ class AccountController
     fun createAccount(@RequestParam(name="beneficiaryName") beneficiaryName: String,
                       @RequestParam(name="pinNumber") pinNumber:String) : Response
     {
-        response = Response().addAction(response, "Creating Account")
-        response = Response().addProcess(response, "validating Pin")
+        response = responseService.addAction(response, "Creating Account")
+        response = responseService.addProcess(response, "validating Pin")
 
         if(bankService.validNewPin(pinNumber))
         {
-            response = Response().addProcess(response, "creating account")
+            response = responseService.addProcess(response, "creating account")
             val newAcc = bankService.createAccount(beneficiaryName,pinNumber)
 
-            response = Response().addProcess(response, "saving account")
+            response = responseService.addProcess(response, "saving account")
             bankRepository.save(newAcc)
 
-            response = Response().addProcess(response, "backing up Account")
+            response = responseService.addProcess(response, "backing up Account")
             backupManager.backupAccount(newAcc)
 
-            response = Response().addResult(response, "account added successfully")
+            response = responseService.addResult(response, "account added successfully")
         }
         else
         {
-            response = Response().addResult(response,"pin must only contain digits 0-9 and be 4 digits long")
+            response = responseService.addResult(response,"pin must only contain digits 0-9 and be 4 digits long")
         }
 
 
@@ -99,16 +100,16 @@ class AccountController
 
     @GetMapping("/api/account/getAccountNumber")
     fun getAccountNumber(@RequestParam(name="beneficiaryName") beneficiaryName: String,
-                         @RequestParam(name="pinNumber")pinNumber: String) :Response
+                         @RequestParam(name="pinNumber")pinNumber: String) : Response
     {
-        response = Response().addAction(response, "getting Account number")
-        response = Response().addProcess(response, "searching for account")
-        response = Response().addResult(response,  "account not found or invalid pin")
+        response = responseService.addAction(response, "getting Account number")
+        response = responseService.addProcess(response, "searching for account")
+        response = responseService.addResult(response,  "account not found or invalid pin")
         for( acc in bankRepository.findAll())
         {
             if(acc.beneficiaryName == beneficiaryName && acc.testPin(pinNumber))
             {
-                response = Response().addResult(response,  acc.accountNumber.toString())
+                response = responseService.addResult(response,  acc.accountNumber.toString())
             }
         }
 
@@ -121,21 +122,21 @@ class AccountController
     fun deposit(@RequestParam (name="accountNumber")accountNumber: String,
                 @RequestParam(name="amount") amount: Double) : Response
     {
-        response = Response().addAction(response, "depositing into account")
-        response = Response().addResult(response, "deposit unsuccessful")
-        response = Response().addProcess(response, "checking if account exists")
+        response = responseService.addAction(response, "depositing into account")
+        response = responseService.addResult(response, "deposit unsuccessful")
+        response = responseService.addProcess(response, "checking if account exists")
 
         if(bankRepository.existsById(accountNumber))
         {
-            response = Response().addProcess(response, "depositing amoount: " + amount)
+            response = responseService.addProcess(response, "depositing amoount: " + amount)
             val depositFloatAccount = bankService.deposit(amount, findAccount(accountNumber))
 
 
-            response = Response().addProcess(response, "updating databases")
+            response = responseService.addProcess(response, "updating databases")
             bankRepository.save(depositFloatAccount)
             backupManager.modBackUp(accountNumber, depositFloatAccount)
 
-            response = Response().addResult(response, "deposit successful")// no validation on deposits
+            response = responseService.addResult(response, "deposit successful")// no validation on deposits
         }
 
         return response
@@ -146,23 +147,23 @@ class AccountController
                  @RequestParam(name="amount") amount: Double,
                  @RequestParam(name= "pinNumber") pinNumber: String) : Response
     {
-        response = Response().addAction(response,"Withdrawing from account")
-        response = Response().addResult(response, "Withdraw unsuccessful")
+        response = responseService.addAction(response,"Withdrawing from account")
+        response = responseService.addResult(response, "Withdraw unsuccessful")
 
-        response = Response().addProcess(response, "checking if account exists")
+        response = responseService.addProcess(response, "checking if account exists")
         if(bankRepository.existsById(accountNumber))
         {
-            response = Response().addProcess(response, "testing pin number")
+            response = responseService.addProcess(response, "testing pin number")
             if(findAccount(accountNumber).testPin(pinNumber))
             {
-                response = Response().addProcess(response, "withdrawing from account amount: "+ amount)
+                response = responseService.addProcess(response, "withdrawing from account amount: "+ amount)
                 val withdrawFloatAcc = bankService.withdraw(amount, findAccount(accountNumber), pinNumber)
 
-                response = Response().addProcess(response, "updating databases")
+                response = responseService.addProcess(response, "updating databases")
                 bankRepository.save(withdrawFloatAcc)
                 backupManager.modBackUp(accountNumber, withdrawFloatAcc)
 
-               response = Response().addResult(response, "withdraw successful")
+               response = responseService.addResult(response, "withdraw successful")
             }
         }
 
@@ -176,18 +177,18 @@ class AccountController
                  @RequestParam(name="amount") amount: Double,
                  @RequestParam(name= "pinNumber") pinNumber: String) : Response
     {
-        response = Response().addAction(response, "Transfer")
-        response = Response().addResult(response, "transfer unsuccessful")
+        response = responseService.addAction(response, "Transfer")
+        response = responseService.addResult(response, "transfer unsuccessful")
 
         if(bankRepository.existsById(fromAccountNumber) && bankRepository.existsById(toAccountNumber))
         {
             if(findAccount(fromAccountNumber).testPin((pinNumber)))
             {
                 val withdrawResponse = withdraw(fromAccountNumber, amount, pinNumber)
-                response = Response().merge(response, withdrawResponse)
+                response = responseService.merge(response, withdrawResponse)
                 val depositResponse = deposit(toAccountNumber, amount)
-                response = Response().merge(response, depositResponse)
-                response = Response().addResult(response, "transfer of amount: " + amount + "  successful")
+                response = responseService.merge(response, depositResponse)
+                response = responseService.addResult(response, "transfer of amount: " + amount + "  successful")
             }
         }
 
@@ -197,21 +198,34 @@ class AccountController
     @GetMapping("/api/account/data")
     fun data(): Response
     {
-        response = Response().addAction(response, "getting account Data")
+        var accountsStr = ""
+        response = responseService.addAction(response, "getting account Data")
 
-        for( acc in bankRepository.findAll())
+        if(bankRepository.findAll().count()>0)
         {
-            response = Response().addProcess(response, bankService.data(acc))
+            for( acc in bankRepository.findAll())
+            {
+                response = responseService.addProcess(response, bankService.data(acc))
+                accountsStr += (bankService.data(acc))
+            }
+
+            response = responseService.addResult(response, accountsStr)
         }
+        else
+        {
+            response = responseService.addProcess(response, "no accounts found")
+            response = responseService.addResult(response, "no accounts found in Database!")
+        }
+
         return response
     }
 
     @GetMapping("/api/account/exists")
     fun accountExists(@RequestParam(name="AccountNumber") accountNumber: String) : Response
     {
-        response = Response().addAction(response, "checking if account exists")
+        response = responseService.addAction(response, "checking if account exists")
 
-        response = Response().addResult(response, bankRepository.existsById(accountNumber).toString())
+        response = responseService.addResult(response, bankRepository.existsById(accountNumber).toString())
         return response
     }
 

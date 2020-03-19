@@ -10,39 +10,16 @@ import org.springframework.boot.runApplication
 class BankSystemSpringApplication
 
 fun main(args: Array<String>) {
+
+	val runningTests: Boolean = true
+	val testManager = TestManager()
+
 	runApplication<BankSystemSpringApplication>(*args)
 
-	val testRun = true
-	val bankTests = BankRepositoryTests()
 
-	if(testRun)
+	if(runningTests)
 	{
-		if(bankTests.createAccountTest())		{
-			println("create account test OKAY")
-		} else {
-			println("create account test FAIL")
-		}
-
-		if(bankTests.depositTest()) {
-			println("deposit test OKAY")
-		} else {
-			println("depost test FAIL")
-		}
-
-		if( bankTests.withdrawTest() ) {
-			println("withdraw test OKAY")
-		} else {
-			println("deposit test FAIL")
-		}
-
-		if(	bankTests.dataTest() ) {
-			println("data test OKAY")
-		} else {
-			println("data test FAIL")
-		}
-
+		testManager.runTests()
 	}
-
-
 }
 
