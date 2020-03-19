@@ -1,1 +1,1 @@
-{"beneficiaryName":"\"pingu\"","pinNumber":"3442","accountNumber":"1","funds":0.0};{"beneficiaryName":"\"mikhail\"","pinNumber":"1234","accountNumber":"1","funds":0.0};{"beneficiaryName":"\"mik\"","pinNumber":"1235","accountNumber":"2","funds":0.0};
+[{"beneficiaryName":"\"mikhail\"","pinNumber":"1205","accountNumber":"1","funds":0.0},{"beneficiaryName":"\"mikhail\"","pinNumber":"1204","accountNumber":"2","funds":0.0}]

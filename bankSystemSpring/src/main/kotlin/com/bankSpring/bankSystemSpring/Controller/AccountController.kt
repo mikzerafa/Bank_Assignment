@@ -1,6 +1,6 @@
 package com.bankSpring.bankSystemSpring.Controller
 
-import com.bankSpring.bankSystemSpring.Backup.BackupManager
+import com.bankSpring.bankSystemSpring.Backup.*
 import com.bankSpring.bankSystemSpring.Service.BankService
 import com.bankSpring.bankSystemSpring.Response.Response
 
@@ -23,7 +23,7 @@ class AccountController
 {
     @Autowired
     lateinit var bankRepository: BankRepository
-    var backupManager = BackupManager()
+    var backupManager = BackupManager2()
     val bankService = BankService()
     val responseService = ResponseService()
     var response = Response()
